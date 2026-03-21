@@ -49,7 +49,7 @@ const ProfilePage = () => {
       const res = await mediaAPI.uploadCV(formData);
       if (res.data?.data?.media?.path) {
         const path = res.data.data.media.path;
-        setForm((prev) => ({ ...prev, cvLink: `/${path}` }));
+        setForm((prev) => ({ ...prev, cvLink: `${path}` }));
         toast.success('CV uploaded successfully!');
       }
     } catch (err) {
