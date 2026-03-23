@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -11,6 +12,7 @@ import { HiOutlineArrowLeft } from 'react-icons/hi';
 const modules = {
   toolbar: [
     [{ header: [1, 2, 3, false] }],
+    [{ color: [] }, { background: [] }],
     ['bold', 'italic', 'underline', 'strike'],
     [{ list: 'ordered' }, { list: 'bullet' }],
     ['blockquote', 'code-block'],
@@ -18,6 +20,22 @@ const modules = {
     ['clean'],
   ],
 };
+
+const formats = [
+  'header',
+  'color',
+  'background',
+  'bold',
+  'italic',
+  'underline',
+  'strike',
+  'list',
+  'bullet',
+  'blockquote',
+  'code-block',
+  'link',
+  'image',
+];
 
 const EditPost = () => {
   const { id } = useParams();
@@ -37,18 +55,29 @@ const EditPost = () => {
   const post = postData?.data?.data?.post;
   const categories = categoriesData?.data?.data?.categories || [];
 
-  const { register, handleSubmit, control, formState: { errors } } = useForm({
-    values: post
-      ? {
-          title: post.title,
-          content: post.content,
-          category: post.category?._id || '',
-          tags: post.tags?.join(', ') || '',
-          status: post.status,
-          thumbnail: post.thumbnail || '',
-        }
-      : undefined,
+  const { register, handleSubmit, control, reset, formState: { errors } } = useForm({
+    defaultValues: {
+      title: '',
+      content: '',
+      category: '',
+      tags: '',
+      status: 'draft',
+      thumbnail: '',
+    },
   });
+
+  useEffect(() => {
+    if (!post) return;
+
+    reset({
+      title: post.title,
+      content: post.content,
+      category: post.category?._id || '',
+      tags: post.tags?.join(', ') || '',
+      status: post.status || 'draft',
+      thumbnail: post.thumbnail || '',
+    });
+  }, [post, reset]);
 
   const updateMutation = useMutation({
     mutationFn: (data) => postsAPI.update(id, data),
@@ -73,7 +102,7 @@ const EditPost = () => {
   if (isLoading) return <LoadingSkeleton type="table" rows={8} />;
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <button onClick={() => navigate('/posts')} className="p-2 text-dark-400 hover:text-white hover:bg-dark-800 rounded-lg transition-colors">
@@ -130,7 +159,16 @@ const EditPost = () => {
               control={control}
               rules={{ required: 'Content is required' }}
               render={({ field }) => (
-                <ReactQuill theme="snow" modules={modules} {...field} />
+                <div  className="sticky-quill max-h-[400px] overflow-auto">
+                  <ReactQuill
+                    theme="snow"
+                    modules={modules}
+                    formats={formats}
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                  />
+                </div>
               )}
             />
             {errors.content && <p className="text-red-400 text-xs mt-1">{errors.content.message}</p>}

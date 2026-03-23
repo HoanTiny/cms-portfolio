@@ -82,6 +82,14 @@
   font-style: normal !important;
 }
 
+/* Keep edit toolbar visible while scrolling long content */
+.sticky-quill .ql-toolbar.ql-snow {
+  position: sticky;
+  top: 0rem;
+  z-index: 20;
+  box-shadow: 0 6px 16px rgba(2, 6, 23, 0.28);
+}
+
 /* Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
