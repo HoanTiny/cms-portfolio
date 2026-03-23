@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { profileAPI } from '../services/api';
+import { profileAPI, mediaAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
-import { HiOutlineSave } from 'react-icons/hi';
+import { HiOutlineSave, HiOutlineUpload } from 'react-icons/hi';
 
 const ProfilePage = () => {
   const queryClient = useQueryClient();
   const [form, setForm] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const { isLoading } = useQuery({
     queryKey: ['profile'],
@@ -35,6 +36,29 @@ const ProfilePage = () => {
     },
     onError: (err) => toast.error(err.response?.data?.error || 'Update failed'),
   });
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+      const res = await mediaAPI.uploadCV(formData);
+      if (res.data?.data?.media?.path) {
+        const path = res.data.data.media.path;
+        setForm((prev) => ({ ...prev, cvLink: `${path}` }));
+        toast.success('CV uploaded successfully!');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to upload CV');
+    } finally {
+      setIsUploading(false);
+      e.target.value = ''; // Reset input
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -78,7 +102,13 @@ const ProfilePage = () => {
             </div>
             <div>
               <label className="label">CV Download Link</label>
-              <input value={form.cvLink} onChange={(e) => set('cvLink', e.target.value)} className="input-field" />
+              <div className="flex gap-2">
+                <input value={form.cvLink} onChange={(e) => set('cvLink', e.target.value)} className="input-field flex-1" />
+                <label className="btn-secondary cursor-pointer flex items-center gap-1 shrink-0 h-[42px] px-4 rounded-md bg-dark-600 hover:bg-dark-500 text-white transition-colors border border-dark-500">
+                  <HiOutlineUpload size={18} /> {isUploading ? 'Uploading...' : 'Upload'}
+                  <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={handleFileUpload} disabled={isUploading} />
+                </label>
+              </div>
             </div>
           </div>
         </div>
